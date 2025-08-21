@@ -1,0 +1,25 @@
+# Example docker-compose.yml for local testing
+version: '3.8'
+
+services:
+  gitlab-claude-reviewer:
+    build: .
+    environment:
+      - GITLAB_TOKEN=${GITLAB_TOKEN}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+    command: [
+      "--project-id", "${PROJECT_ID}",
+      "--mr-id", "${MR_ID}",
+      "--gitlab-url", "${GITLAB_URL:-https://gitlab.com}",
+      "--verbose"
+    ]
+    
+# Usage:
+# 1. Create a .env file with your tokens:
+#    GITLAB_TOKEN=your_gitlab_token
+#    CLAUDE_API_KEY=your_claude_api_key
+#    PROJECT_ID=your_project_id
+#    MR_ID=merge_request_id
+#    GITLAB_URL=https://your-gitlab-instance.com  # optional
+#
+# 2. Run: docker-compose up
