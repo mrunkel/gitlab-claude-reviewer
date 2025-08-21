@@ -1,0 +1,79 @@
+# Example .gitlab-ci.yml configuration for using gitlab-claude-reviewer
+# Add this to your project's .gitlab-ci.yml file
+
+stages:
+  - test
+  - review
+
+# Your existing test stages...
+
+# AI Code Review Stage
+ai-review:
+  stage: review
+  image: your-registry/gitlab-claude-reviewer:latest  # Use your built image
+  variables:
+    # These should be set in GitLab CI/CD Variables (Settings > CI/CD > Variables)
+    # GITLAB_TOKEN: Your GitLab personal access token (with API scope)
+    # CLAUDE_API_KEY: Your Claude API key from Anthropic
+  script:
+    - |
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        gitlab-claude-reviewer \
+          --project-id="$CI_PROJECT_ID" \
+          --mr-id="$CI_MERGE_REQUEST_IID" \
+          --gitlab-url="$CI_SERVER_URL" \
+          --verbose
+      else
+        echo "Not a merge request, skipping AI review"
+      fi
+  only:
+    - merge_requests
+  when: manual  # Remove this line to make it automatic
+
+---
+
+# Alternative: Using Docker Hub image (when available)
+ai-review-dockerhub:
+  stage: review
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - |
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        docker run --rm \
+          -e GITLAB_TOKEN="$GITLAB_TOKEN" \
+          -e CLAUDE_API_KEY="$CLAUDE_API_KEY" \
+          your-dockerhub-username/gitlab-claude-reviewer:latest \
+          --project-id="$CI_PROJECT_ID" \
+          --mr-id="$CI_MERGE_REQUEST_IID" \
+          --gitlab-url="$CI_SERVER_URL" \
+          --verbose
+      else
+        echo "Not a merge request, skipping AI review"
+      fi
+  only:
+    - merge_requests
+  when: manual
+
+---
+
+# For self-hosted GitLab with custom registry
+ai-review-custom:
+  stage: review
+  image: 
+    name: $CI_REGISTRY/your-group/gitlab-claude-reviewer:latest
+    entrypoint: [""]
+  script:
+    - |
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        /root/gitlab-claude-reviewer \
+          --project-id="$CI_PROJECT_ID" \
+          --mr-id="$CI_MERGE_REQUEST_IID" \
+          --gitlab-url="$CI_SERVER_URL" \
+          --verbose
+      else
+        echo "Not a merge request, skipping AI review"
+      fi
+  only:
+    - merge_requests
